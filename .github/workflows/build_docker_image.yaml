@@ -1,0 +1,33 @@
+name: Create and Push Docker Container to ECR
+on: [push]
+jobs:
+  docker-container:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./
+    steps:
+      - name: Checking out the repository
+        uses: actions/checkout@v2
+        with:
+          ref: ${{github.ref}}
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Build Container
+        run: |
+          docker build --build-arg AWS_ACCESS_KEY_ID=${{secrets.AWS_ACCESS_KEY_ID}} --build-arg AWS_SECRET_ACCESS_KEY=${{secrets.AWS_SECRET_ACCESS_KEY}}  -t mlops-nauman:latest .
+      - name: Push to ECR
+        id: ecr
+        uses: jwalton/gh-ecr-push@v1
+        with:
+          access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID}}
+          secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+          region: us-east-1
+          image: mlops-nauman:latest
+
+      - name: Update lambda with image
+        run: aws lambda update-function-code --function-name mlops  --image-uri 314541027717.dkr.ecr.us-east-1.amazonaws.com/mlops-nauman:latest
