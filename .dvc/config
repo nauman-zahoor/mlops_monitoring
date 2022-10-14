@@ -1,0 +1,4 @@
+[core]
+    remote = awsstorage
+['remote "awsstorage"']
+    url = s3://mlops-aws-nauman
